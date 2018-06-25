@@ -8,7 +8,6 @@ import eventBus from '../lib/events';
 import reactcss from 'reactcss';
 
 class Timeseries extends Component {
-
   constructor(props) {
     super(props);
     const values = this.getLastValues(props);
@@ -17,7 +16,7 @@ class Timeseries extends Component {
       values: values || {},
       show: _.keys(values) || [],
       ignoreLegendUpdates: false,
-      ignoreVisabilityUpdates: false
+      ignoreVisabilityUpdates: false,
     };
     this.toggleFilter = this.toggleFilter.bind(this);
     this.handleHideClick = this.handleHideClick.bind(this);
@@ -26,11 +25,15 @@ class Timeseries extends Component {
 
   filterLegend(id) {
     if (!_.has(this.state.values, id)) return [];
-    const notAllShown = _.keys(this.state.values).length !== this.state.show.length;
+    const notAllShown =
+      _.keys(this.state.values).length !== this.state.show.length;
     const isCurrentlyShown = _.includes(this.state.show, id);
     const show = [];
     if (notAllShown && isCurrentlyShown) {
-      this.setState({ ignoreVisabilityUpdates: false, show: Object.keys(this.state.values) });
+      this.setState({
+        ignoreVisabilityUpdates: false,
+        show: Object.keys(this.state.values),
+      });
     } else {
       show.push(id);
       this.setState({ ignoreVisabilityUpdates: true, show: [id] });
@@ -39,16 +42,22 @@ class Timeseries extends Component {
   }
 
   toggleFilter(event, id) {
-    const show = this.filterLegend(id);
-    if (_.isFunction(this.props.onFilter)) {
-      this.props.onFilter(show);
+    if (event.ctrlKey && this.props.onDrillDown) {
+      const series = this.props.series.filter(s => s.id === id)[0];
+      console.log(series.label);
+      this.props.onDrillDown(series);
+    } else {
+      const show = this.filterLegend(id);
+      if (_.isFunction(this.props.onFilter)) {
+        this.props.onFilter(show);
+      }
+      eventBus.trigger('toggleFilter', id, this);
     }
-    eventBus.trigger('toggleFilter', id, this);
   }
 
   getLastValues(props) {
     const values = {};
-    props.series.forEach((row) => {
+    props.series.forEach(row => {
       // we need a valid identifier
       if (!row.id) row.id = row.label;
       values[row.id] = getLastValue(row.data);
@@ -59,9 +68,13 @@ class Timeseries extends Component {
   updateLegend(pos, item) {
     const values = {};
     if (pos) {
-      this.props.series.forEach((row) => {
+      this.props.series.forEach(row => {
         if (row.data && Array.isArray(row.data)) {
-          if (item && row.data[item.dataIndex] && row.data[item.dataIndex][0] === item.datapoint[0]) {
+          if (
+            item &&
+            row.data[item.dataIndex] &&
+            row.data[item.dataIndex][0] === item.datapoint[0]
+          ) {
             values[row.id] = row.data[item.dataIndex][1];
           } else {
             let closest;
@@ -69,9 +82,9 @@ class Timeseries extends Component {
               closest = i;
               if (row.data[i] && pos.x < row.data[i][0]) break;
             }
-            if (!row.data[closest]) return values[row.id] = null;
-            const [ , value ] = row.data[closest];
-            values[row.id] = value != null && value || null;
+            if (!row.data[closest]) return (values[row.id] = null);
+            const [, value] = row.data[closest];
+            values[row.id] = (value != null && value) || null;
           }
         }
       });
@@ -83,7 +96,8 @@ class Timeseries extends Component {
   }
 
   componentWillReceiveProps(props) {
-    if (props.legend !== this.props.legend) this.setState({ showLegend: props.legend });
+    if (props.legend !== this.props.legend)
+      this.setState({ showLegend: props.legend });
     if (!this.state.ignoreLegendUpdates) {
       const values = this.getLastValues(props);
       const currentKeys = _.keys(this.state.values);
@@ -110,13 +124,17 @@ class Timeseries extends Component {
     if (this.props.reversed) {
       className += ' reversed';
     }
-    const styles = reactcss({
-      bottomLegend: {
-        content: {
-          flexDirection: 'column'
-        }
-      }
-    }, { bottomLegend: this.props.legendPosition === 'bottom' });
+    const styles = reactcss(
+      {
+        bottomLegend: {
+          content: {
+            flexDirection: 'column',
+          },
+        },
+      },
+      { bottomLegend: this.props.legendPosition === 'bottom' }
+    );
+
     return (
       <div className={className}>
         <div style={styles.content} className="rhythm_chart__content">
@@ -152,14 +170,11 @@ class Timeseries extends Component {
       </div>
     );
   }
-
-
-
 }
 
 Timeseries.defaultProps = {
   legned: true,
-  showGrid: true
+  showGrid: true,
 };
 
 Timeseries.propTypes = {
@@ -173,7 +188,7 @@ Timeseries.propTypes = {
   tickFormatter: PropTypes.func,
   showGrid: PropTypes.bool,
   xaxisLabel: PropTypes.string,
-  dateFormat: PropTypes.string
+  dateFormat: PropTypes.string,
 };
 
 export default Timeseries;

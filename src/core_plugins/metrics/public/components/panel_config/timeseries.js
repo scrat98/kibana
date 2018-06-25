@@ -65,6 +65,18 @@ class TimeseriesPanelConfig extends Component {
     } else {
       view = (
         <div className="vis_editor__container">
+          <div className="vis_editor__vis_config-row">
+            <label className="vis_editor__label" htmlFor={htmlId('itemUrl')}>
+              Item Url (This supports mustache templating.
+              <code>{'{{key}}'}</code> is set to the term)
+            </label>
+            <input
+              id={htmlId('itemUrl')}
+              className="vis_editor__input-grows"
+              onChange={handleTextChange('drilldown_url')}
+              value={model.drilldown_url}
+            />
+          </div>
           <IndexPattern
             fields={this.props.fields}
             model={this.props.model}

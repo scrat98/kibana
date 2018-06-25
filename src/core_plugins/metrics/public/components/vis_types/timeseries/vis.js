@@ -176,6 +176,11 @@ class TimeseriesVisualization extends Component {
       style.backgroundColor = panelBackgroundColor;
       params.reversed = color(panelBackgroundColor || backgroundColor).luminosity() < 0.45;
     }
+    if (model.drilldown_url) {
+      params.onDrillDown = (item) => {
+        window.location = replaceVars(model.drilldown_url, {}, { key: item.label });
+      };
+    }
     return (
       <div className="dashboard__visualization" style={style}>
         <Timeseries {...params}/>
